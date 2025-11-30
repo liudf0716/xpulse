@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="xPulse - 智能高亮 X/Twitter 热门推文的浏览器扩展">
+    <title>xPulse - 智能热门推文发现工具</title>
+    <link rel="icon" type="image/png" href="../icon32.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1d9bf0;
+            --secondary-color: #f91880;
+            --dark-bg: #15202b;
+            --light-bg: #ffffff;
+            --text-primary: #0f1419;
+            --text-secondary: #536471;
+            --border-color: #eff3f4;
+            --gradient-start: #1d9bf0;
+            --gradient-end: #f91880;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="white" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero .tagline {
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            animation: fadeInUp 0.8s ease-out 0.2s backwards;
+        }
+
+        .hero .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.4s backwards;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 20px;
+            background: var(--light-bg);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 50px;
+            color: var(--text-primary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 80px 20px;
+            background: linear-gradient(135deg, #f6f8fa 0%, #e9ecef 100%);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .step {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 30px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .step h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .step p {
+            color: var(--text-secondary);
+        }
+
+        /* Screenshots */
+        .screenshots {
+            padding: 80px 20px;
+            background: white;
+        }
+
+        .screenshot-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .screenshot-item {
+            background: #f6f8fa;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .screenshot-item h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .screenshot-item p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 60px 20px;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .stat-item p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 80px 20px;
+            background: var(--dark-bg);
+            color: white;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+
+        /* Footer */
+        footer {
+            background: #0f1419;
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .tagline {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .features-grid,
+            .steps {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        /* Logo */
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <img src="../icon128.png" alt="xPulse Logo" class="logo floating">
+            <div class="badge">🚀 版本 2.7 现已发布</div>
+            <h1>xPulse</h1>
+            <p class="tagline">智能发现 X/Twitter 上的热门推文，永不错过精彩内容</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/liudf0716/xPulse/releases" class="btn btn-primary">立即下载</a>
+                <a href="https://github.com/liudf0716/xPulse" class="btn btn-secondary">查看源码</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>🔥</h3>
+                    <p>智能热度算法</p>
+                </div>
+                <div class="stat-item">
+                    <h3>⚡</h3>
+                    <p>实时自动扫描</p>
+                </div>
+                <div class="stat-item">
+                    <h3>🎨</h3>
+                    <p>精美视觉效果</p>
+                </div>
+                <div class="stat-item">
+                    <h3>🔒</h3>
+                    <p>隐私保护优先</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">✨ 核心功能</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>智能热度检测</h3>
+                    <p>基于浏览量和时间的智能算法，自动识别高潜力推文，帮助您快速发现热门内容。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎛️</div>
+                    <h3>完全可自定义</h3>
+                    <p>自定义热度阈值（100-1,000,000）和时间窗口（1-72小时），打造专属的内容发现体验。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌏</div>
+                    <h3>多语言支持</h3>
+                    <p>可选择仅标记中文推文，或标记所有语言内容，满足不同用户需求。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <h3>一键截图分享</h3>
+                    <p>快速将推文转换为精美图片，支持下载和复制，已针对移动端显示优化。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>即时生效</h3>
+                    <p>修改设置后无需刷新页面，配置立即应用，体验流畅无缝。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3>隐私安全</h3>
+                    <p>完全本地运行，无网络请求，不收集任何用户数据，开源透明可审查。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">🚀 使用步骤</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>下载安装</h3>
+                    <p>下载扩展并在浏览器中加载，支持 Chrome、Edge、Firefox 等主流浏览器。</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>个性化配置</h3>
+                    <p>点击工具栏图标，设置您的热度阈值、时间窗口和语言偏好。</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>浏览推文</h3>
+                    <p>访问 X/Twitter，刷新页面，开始享受智能高亮的热门推文。</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>快速分享</h3>
+                    <p>点击截图按钮，将喜欢的推文转换为精美图片，分享给朋友。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots -->
+    <section class="screenshots">
+        <div class="container">
+            <h2 class="section-title">📱 功能展示</h2>
+            <div class="screenshot-container">
+                <div class="screenshot-item">
+                    <h3>🔥 热门推文高亮</h3>
+                    <p>符合条件的推文会在回复按钮处显示动态火焰图标，帮助您快速识别热门内容。</p>
+                    <div style="background: #e1e8ed; padding: 40px; border-radius: 10px; text-align: center;">
+                        <p style="color: #657786; font-style: italic;">[ 截图占位 - 显示带火焰图标的推文 ]</p>
+                    </div>
+                </div>
+                <div class="screenshot-item">
+                    <h3>⚙️ 设置面板</h3>
+                    <p>简洁直观的配置界面，轻松自定义各项参数。</p>
+                    <div style="background: #e1e8ed; padding: 40px; border-radius: 10px; text-align: center;">
+                        <p style="color: #657786; font-style: italic;">[ 截图占位 - 显示设置面板 ]</p>
+                    </div>
+                </div>
+                <div class="screenshot-item">
+                    <h3>📸 推文截图</h3>
+                    <p>生成的图片已针对移动端优化，支持下载和复制到剪贴板。</p>
+                    <div style="background: #e1e8ed; padding: 40px; border-radius: 10px; text-align: center;">
+                        <p style="color: #657786; font-style: italic;">[ 截图占位 - 显示截图预览窗口 ]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>准备好发现更多精彩内容了吗？</h2>
+            <p>立即下载 xPulse，开启您的智能推文发现之旅</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/liudf0716/xPulse/releases" class="btn btn-primary">下载 xPulse</a>
+                <a href="https://github.com/liudf0716/xPulse#%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95" class="btn btn-secondary">安装指南</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>由 <a href="https://twitter.com/staylightblow8" target="_blank">@staylightblow8</a> 用 ❤️ 制作</p>
+            <p style="margin-top: 10px; opacity: 0.7;">
+                <a href="https://github.com/liudf0716/xPulse">GitHub</a> | 
+                <a href="https://github.com/liudf0716/xPulse/issues">问题反馈</a> | 
+                <a href="https://github.com/liudf0716/xPulse/blob/main/README.md">文档</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 0.9rem; opacity: 0.6;">
+                © 2024 xPulse. 开源协议: MIT License
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
